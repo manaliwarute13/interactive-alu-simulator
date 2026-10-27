@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive ALU Simulator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#f4f6ff;font-family:Arial,sans-serif}
+header{text-align:center;padding:28px;background:#151d32;border-bottom:1px solid #35415c}
+header h1{color:#9baaff;margin:0}
+header p,.muted{color:#a5b0c8}
+main{max-width:900px;margin:28px auto;padding:15px}
+.panel{background:#151d32;border:1px solid #293651;border-radius:14px;padding:24px;margin-bottom:20px}
+label{display:block;margin:12px 0 6px;color:#b9c5dd}
+input,select{width:100%;padding:12px;background:#0b1020;border:1px solid #35415c;border-radius:8px;color:white;font-size:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+button{margin-top:18px;padding:13px 20px;border:0;border-radius:8px;background:#9baaff;color:#0b1020;font-weight:bold;cursor:pointer}
+.result{background:#0b1020;border:1px solid #35415c;border-radius:10px;padding:18px;margin-top:20px;overflow-wrap:anywhere}
+.result h2{color:#35d6a0}
+.binary{font-size:24px;letter-spacing:3px;color:#9baaff;overflow-wrap:anywhere}
+.bitgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:16px}
+.bit{background:#202b4a;text-align:center;padding:10px 2px;border-radius:6px}
+.bit small{display:block;color:#a5b0c8}
+.bit.active{background:#285a50;color:#8ff0cf}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{text-align:center;padding:10px;border-bottom:1px solid #35415c}
+th{color:#9baaff}
+footer{text-align:center;padding:22px;color:#a5b0c8}
+@media(max-width:550px){.grid{grid-template-columns:1fr}.panel{padding:16px}.binary{font-size:18px}.bit{font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+<h1>Interactive ALU Simulator</h1>
+<p>Arithmetic Logic Unit | COA Mini Project</p>
+</header>
+<main>
+<section class="panel">
+<h2>ALU Input Panel</h2>
+<p class="muted">Enter two unsigned 8-bit numbers (0–255).</p>
+<div class="grid">
+<div><label for="a">Operand A</label><input id="a" type="number" min="0" max="255" value="12"></div>
+<div><label for="b">Operand B</label><input id="b" type="number" min="0" max="255" value="5"></div>
+</div>
+<label for="op">Select Operation</label>
+<select id="op">
+<option value="ADD">Addition (A + B)</option>
+<option value="SUB">Subtraction (A - B)</option>
+<option value="AND">Bitwise AND</option>
+<option value="OR">Bitwise OR</option>
+<option value="XOR">Bitwise XOR</option>
+<option value="NOTA">Bitwise NOT (A)</option>
+<option value="SHL">Shift Left (A)</option>
+<option value="SHR">Shift Right (A)</option>
+</select>
+<button onclick="calculate()">Execute Operation</button>
+<div id="error" class="muted" role="status"></div>
+</section>
+
+<section class="panel">
+<h2>Execution Result</h2>
+<div class="result">
+<p id="operation">Operation: Addition</p>
+<p>Decimal Result</p><h2 id="decimal">17</h2>
+<p>8-Bit Binary Result</p><div class="binary" id="binary">00010001</div>
+<p id="carry">Carry / Overflow: No</p>
+<p id="flags">Zero Flag: No | Negative Flag: No</p>
+</div>
+<h3>Binary Bit Visualization</h3>
+<p class="muted">Each box represents one bit, from bit 7 to bit 0.</p>
+<div id="bits" class="bitgrid"></div>
+</section>
+
+<section class="panel">
+<h2>Truth Table Reference</h2>
+<table>
+<thead><tr><th>A</th><th>B</th><th>AND</th><th>OR</th><th>XOR</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+</tbody>
+</table>
+<p class="muted">This is an educational software simulation of basic 8-bit ALU operations.</p>
+</section>
+</main>
+<footer>Interactive ALU Simulator | Computer Organization and Architecture</footer>
+
+<script>
+function calculate(){
+ const a=Number(document.getElementById("a").value);
+ const b=Number(document.getElementById("b").value);
+ const op=document.getElementById("op").value;
+ const error=document.getElementById("error");
+
+ if(document.getElementById("a").value===""||
+    document.getElementById("b").value===""){
+   error.textContent="Please enter both operands.";
+   return;
+ }
+ if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||a>255||b<0||b>255){
+   error.textContent="Both operands must be integers from 0 to 255.";
+   return;
+ }
+
+ error.textContent="";
+ let raw=0,name="",carry="No";
+
+ switch(op){
+  case "ADD":
+   raw=a+b; name="Addition (A + B)";
+   carry=raw>255?"Yes":"No"; break;
+  case "SUB":
+   raw=a-b; name="Subtraction (A - B)";
+   carry=a<b?"Yes (borrow)":"No"; break;
+  case "AND": raw=a&b; name="Bitwise AND"; break;
+  case "OR": raw=a|b; name="Bitwise OR"; break;
+  case "XOR": raw=a^b; name="Bitwise XOR"; break;
+  case "NOTA": raw=(~a)&255; name="Bitwise NOT (A)"; break;
+  case "SHL": raw=a<<1; name="Shift Left (A)";
+   carry=(a&128)?"Yes":"No"; break;
+  case "SHR": raw=a>>>1; name="Shift Right (A)";
+   carry=(a&1)?"Yes":"No"; break;
+ }
+
+ const result=raw&255;
+ const bits=result.toString(2).padStart(8,"0");
+ document.getElementById("operation").textContent="Operation: "+name;
+ document.getElementById("decimal").textContent=result;
+ document.getElementById("binary").textContent=bits;
+ document.getElementById("carry").textContent="Carry / Borrow: "+carry;
+ document.getElementById("flags").textContent=
+  "Zero Flag: "+(result===0?"Yes":"No")+
+  " | Negative Flag: "+((result&128)?"Yes":"No");
+
+ const bitBox=document.getElementById("bits");
+ bitBox.innerHTML="";
+ for(let i=7;i>=0;i--){
+  const item=document.createElement("div");
+  item.className="bit"+(((result>>i)&1)?" active":"");
+  const label=document.createElement("small");
+  label.textContent="Bit "+i;
+  const value=document.createElement("strong");
+  value.textContent=(result>>i)&1;
+  item.append(label,value);
+  bitBox.appendChild(item);
+ }
+}
+document.getElementById("op").addEventListener("change",calculate);
+calculate();
+</script>
+</body>
+</html>
